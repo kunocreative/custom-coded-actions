@@ -1,0 +1,37 @@
+var axios = require('axios');
+exports.main = async (event, callback) => {
+
+  const timestemp = Date.now()
+  //console.log(timestemp, new Date(timestemp),process.env.DealsAccessToken,event.object.objectId)
+
+  var data = JSON.stringify({
+    "properties": {
+      "rsm_assigned_date__unix_": timestemp
+    }
+  });
+  const contactId = event.object.objectId;
+	if(contactId && timestemp){
+      var config = {
+        method: 'patch',
+        url: 'https://api.hubapi.com/crm/v3/objects/contacts/'+contactId,
+        headers: {
+          'Authorization': 'Bearer '+process.env.DealsAccessToken,
+          'Content-Type': 'application/json'
+        },
+        data: data
+      };
+
+      axios(config)
+        .then(function (response) {
+          console.log(JSON.stringify(response.data));
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+	}
+  callback({
+    outputFields: {
+      rsm_assigned_date__unix_: timestemp
+    }
+  });
+}
