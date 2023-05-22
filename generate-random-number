@@ -1,0 +1,27 @@
+const randomNumber = require('random-number-csprng');
+
+exports.main = async (event, callback) => {
+  const objectId = "2-9683389"; // Provided Object ID
+  const portalId = 2659736; // Provided Portal ID
+
+  // Generate a random number of 5 digits
+  const generateRandomNumber = async () => {
+    try {
+      const randomNum = await randomNumber(10000, 99999);
+      return randomNum.toString();
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  };
+
+  // Execute the function to generate the random number
+  const randomNum = await generateRandomNumber();
+
+  // Output the generated random number with portal ID and object ID
+  callback({
+    outputFields: {
+      shipping: randomNum // Output field defined as 'shipping'
+    }
+  });
+};
