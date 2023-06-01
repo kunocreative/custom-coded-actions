@@ -1,0 +1,58 @@
+const hubspot = require('@hubspot/api-client');
+var axios = require('axios');
+
+exports.main = (event, callback) => {
+  // Set up the HubSpot API client
+  const hubspotClient = new hubspot.Client({
+    accessToken: process.env.secretName // access token
+  });
+
+  // Use the client to pull information relating to the currently enrolled contact
+  hubspotClient.crm.contacts.basicApi.getById(event.object.objectId)
+    .then(() => {
+      // Fetch the existing contacts in the list to determine the lowest available value
+      var config = {
+        method: 'get',
+        url: 'https://api.hubapi.com/contacts/v1/lists/722/contacts/all?property=shipment_daily_count',
+        headers: { 
+          'Authorization': `Bearer ${process.env.secretName}`
+        }
+      };
+      axios(config)// updated list ID
+        .then(async(listContacts) => {
+			
+          // Extract the assigned values of existing contacts in the list
+          const assignedValues = await listContacts.data.contacts
+            .map(contact => contact.properties['shipment_daily_count'] ? parseInt(contact.properties['shipment_daily_count'].value)  : '' ) // updated property name
+			.filter(value => typeof value === 'number');
+
+          // Find the lowest available value
+          let lowestValue = 1;
+          while (assignedValues.includes(lowestValue)) {
+            lowestValue++;
+          }
+        
+        // Update the contact with the assigned value
+          hubspotClient.crm.contacts.basicApi.update(event.object.objectId, {
+            properties: {
+              'shipment_daily_count': lowestValue // updated property name
+            }
+          }).then(() => {
+            callback(null, { "shipment_daily_count": lowestValue }); // pass the lowestValue as output
+          }).catch(err => {
+            console.error(err);
+            callback(err); // return error to callback
+          });
+
+        })
+        .catch(err => {
+          console.error(err);
+          callback(err); // return error to callback
+        });
+    })
+    .catch(err => {
+      console.error(err);
+      callback(err); // return error to callback
+    });
+ 
+};
