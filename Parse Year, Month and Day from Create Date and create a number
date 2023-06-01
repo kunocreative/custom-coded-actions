@@ -1,0 +1,16 @@
+exports.main = async (event, callback) => {
+  const shipments = event.inputFields || [];
+    const createDate = parseInt(shipments.hs_createdate);
+    // Extract the year, month, and day values from 'hs_createdate'
+    const dateParts = new Date(createDate);
+    const month = parseInt(dateParts.getMonth())+1;
+    const day = parseInt(dateParts.getDate());
+    const year = parseInt(dateParts.getFullYear());
+    const dateInNumber = `${year}0${month}${day}`;
+
+  callback({
+    outputFields: {
+      date_in_number: dateInNumber
+    }
+  });
+};
