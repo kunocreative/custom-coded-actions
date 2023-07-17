@@ -1,0 +1,83 @@
+const axios = require("axios");
+
+const accessToken = "Access Token";
+
+exports.main = async (event, callback) => {
+  try {
+    
+const sleep=  async(ms) => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+    
+    const websiteUrl = event.fields.website;
+    const contactId = event.object.objectId;
+    console.log(websiteUrl, contactId);
+    if (websiteUrl && contactId) {
+      const domain = extractDomain(websiteUrl);
+      var data = JSON.stringify({
+        limit: 2,
+        requestOptions: {
+          properties: [],
+        },
+        offset: {
+          isPrimary: true,
+          companyId: 0,
+        },
+      }); 
+	await sleep(1000);
+      const {
+        data: { results: companies },
+      } = await axios.post(
+        `https://api.hubapi.com/companies/v2/domains/${domain}/companies`,
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("companies", JSON.stringify(companies));
+      let association
+      if ((companies[0].companyId, contactId)) {
+        const companyId = companies[0].companyId;
+        await sleep(1000);
+        association = await associateContactWithCompany(contactId, companyId);
+        console.log("ssssss", JSON.stringify(association));
+      }
+
+  callback({
+    outputFields: {
+      companyId: companies[0].companyId,
+      contactId:association,
+    },
+  });
+    }
+      } catch (error) {
+    console.error("Error occurred:", error);
+  }
+};
+
+// Function to extract domain from a URL
+const extractDomain = (url) => {
+  const domainRegex = /^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n]+)/im;
+  const matches = url.match(domainRegex);
+  return matches ? matches[1] : url;
+};
+
+const associateContactWithCompany = async (contactId, companyId) => {  
+  const {
+    data,
+  } = await axios.put(
+    `https://api.hubspot.com/crm/v3/objects/contact/${contactId}/associations/companies/${companyId}/279`,{},
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  console.log("association", data.id) 
+  return data.id;
+};
