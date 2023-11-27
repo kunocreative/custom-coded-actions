@@ -1,0 +1,60 @@
+const axios = require("axios");
+// HubSpot passes the properties object to the main function
+exports.main = (event, callback) => {
+  
+  const accessToken = process.env.accessToken;
+  const dealId = event.object.objectId;
+  const equipment_subtotal = 1511625;
+  const product = event.inputFields.product;
+  const standard_1mw_r3di_installation = event.inputFields.standard_1mw_r3di_installation;
+  const state___city_installation_variable_comp = event.inputFields.state___city_installation_variable_comp;
+  const real_estate_constraint_variable = event.inputFields.real_estate_constraint_variable;
+  const site_specific_installation_variable = event.inputFields.site_specific_installation_variable;
+  const freight___shipping = 10000;
+  const r3di_installation_fees = event.inputFields.r3di_installation_fees || 400000;
+  const standard_channel_partner_fees = event.inputFields.standard_channel_partner_fees;
+  const out_of_country_contingency = event.inputFields.out_of_country_contingency;
+  const grove__15__year_ = event.inputFields.grove__15__year_;
+
+  let installationSubtotal = 0;
+  const installationFees = parseFloat(r3di_installation_fees);
+
+  if (standard_1mw_r3di_installation === "true") {
+    installationSubtotal += installationFees;
+  }
+  if (state___city_installation_variable_comp === "true") {
+    installationSubtotal += installationFees * 0.1;
+  }
+  if (real_estate_constraint_variable === "true") {
+    installationSubtotal += installationFees * 0.25;
+  }
+  if (site_specific_installation_variable === "true") {
+    installationSubtotal += installationFees * 0.1;
+  }
+
+  installationSubtotal += parseFloat(freight___shipping || 0);
+  console.log("installationSubtotal", installationSubtotal);
+
+  let totalPreliminaryQuotePricing = parseFloat(equipment_subtotal) + parseFloat(installationSubtotal);
+  const standardMarkUp = totalPreliminaryQuotePricing * 0.4;
+  totalPreliminaryQuotePricing += standardMarkUp;
+
+  if (standard_channel_partner_fees === "true") {
+    totalPreliminaryQuotePricing += totalPreliminaryQuotePricing * 0.025;    
+  }
+  if (out_of_country_contingency === "true") {
+    totalPreliminaryQuotePricing += totalPreliminaryQuotePricing * 0.01;
+  }
+  if (grove__15__year_ === "true") {
+    totalPreliminaryQuotePricing += totalPreliminaryQuotePricing * 0.02;
+  }
+	console.log("totalPreliminaryQuotePricing",totalPreliminaryQuotePricing)
+  callback({
+    outputFields: {
+      equipmentSubtotal: equipment_subtotal,
+      installationSubtotal: installationSubtotal,
+      totalPreliminaryQuotePricing: totalPreliminaryQuotePricing.toFixed(),
+    },
+  });
+};
+
